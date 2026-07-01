@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Automation Dashboard v3.0</title>
+    <style>
+        /* ==========================================
+           CSS VARIABLES & RESET
+           ========================================== */
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: #1a2332;
+            --bg-hover: #1e293b;
+            --border: #2a3a4e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* ==========================================
+           HEADER
+           ========================================== */
+        .header {
+            background: linear-gradient(135deg, #1a2332 0%, #0f172a 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ==========================================
+           NAVIGATION TABS
+           ========================================== */
+        .nav-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 12px 32px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .nav-tab.active { 
+            background: var(--accent-blue); 
+            color: white; 
+            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+        }
+
+        /* ==========================================
+           MAIN CONTENT
+           ========================================== */
+        .main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ==========================================
+           STATS CARDS
+           ========================================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .stat-icon.blue { background: rgba(59,130,246,0.15); }
+        .stat-icon.green { background: rgba(16,185,129,0.15); }
+        .stat-icon.yellow { background: rgba(245,158,11,0.15); }
+        .stat-icon.purple { background: rgba(139,92,246,0.15); }
+
+        .stat-info h3 { font-size: 24px; font-weight: 700; }
+        .stat-info p { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+        /* ==========================================
+           CARDS & PANELS
+           ========================================== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-body { padding: 20px; }
+
+        /* ==========================================
+           BUTTONS
+           ========================================== */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #2563eb;
+            box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: white;
+        }
+        .btn-success:hover:not(:disabled) {
+            background: #059669;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+
+        .btn-warning {
+            background: var(--accent-yellow);
+            color: #000;
+        }
+        .btn-warning:hover:not(:disabled) { background: #d97706; }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: white;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+            box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        .btn-outline:hover { background: var(--bg-hover); }
+
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        /* ==========================================
+           FORMS
+           ========================================== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 10px 14px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-blue);
+        }
+
+        /* ==========================================
+           TABLE
+           ========================================== */
+        .table-wrapper { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        th {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover td { background: var(--bg-hover); }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-green { background: rgba(16,185,129,0.15); color: var(--accent-green); }
+        .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent-blue); }
+        .badge-yellow { background: rgba(245,158,11,0.15); color: var(--accent-yellow); }
+        .badge-red { background: rgba(239,68,68,0.15); color: var(--accent-red); }
+
+        /* ==========================================
+           LOG VIEWER
+           ========================================== */
+        .log-viewer {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .log-entry { padding: 2px 0; display: flex; gap: 12px; flex-wrap: wrap; }
+        .log-time { color: var(--text-muted); min-width: 80px; }
+        .log-level { min-width: 60px; font-weight: 700; }
+        .log-level.INFO { color: var(--accent-blue); }
+        .log-level.SUCCESS { color: var(--accent-green); }
+        .log-level.ERROR { color: var(--accent-red); }
+        .log-module { color: var(--accent-purple); min-width: 80px; }
+        .log-msg { color: var(--text-primary); flex: 1; }
+
+        /* ==========================================
+           CONFIG OUTPUT
+           ========================================== */
+        .config-output {
+            background: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            color: var(--accent-green);
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+
+        /* ==========================================
+           SPINNER
+           ========================================== */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ==========================================
+           RESPONSIVE
+           ========================================== */
+        @media (max-width: 768px) {
+            .header { padding: 12px 16px; }
+            .nav-tabs { padding: 8px 16px; }
+            .main { padding: 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ==========================================
+           TOAST NOTIFICATION
+           ========================================== */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            padding: 14px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            animation: slideIn 0.3s ease;
+            max-width: 380px;
+        }
+
+        .toast-success { background: #065f46; color: #a7f3d0; border: 1px solid #10b981; }
+        .toast-error { background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; }
+        .toast-info { background: #1e3a5f; color: #93c5fd; border: 1px solid #3b82f6; }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ==========================================
+           TWO COLUMN LAYOUT
+           ========================================== */
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
+
+        /* ==========================================
+           MODAL
+           ========================================== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlide 0.3s ease;
+        }
+
+        @keyframes modalSlide {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h3 { font-size: 18px; font-weight: 600; }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==========================================
+         HEADER
+         ========================================== -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">🌐</div>
+            <div>
+                <h1>Network Automation Dashboard</h1>
+                <div class="header-status">
+                    <span class="status-dot"></span>
+                    <span id="headerStatus">System Online</span>
+                </div>
+            </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline" onclick="refreshAll()">🔄 Refresh</button>
+            <button class="btn btn-outline" onclick="window.open('/docs','_blank')">📚 API Docs</button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         NAVIGATION
+         ========================================== -->
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('overview')">📊 Tổng Quan</button>
+        <button class="nav-tab" onclick="switchTab('devices')">🖥️ Thiết Bị</button>
+        <button class="nav-tab" onclick="switchTab('backup')">💾 Backup</button>
+        <button class="nav-tab" onclick="switchTab('deploy')">🚀 Deploy Config</button>
+        <button class="nav-tab" onclick="switchTab('discovery')">🔍 Discovery</button>
+        <button class="nav-tab" onclick="switchTab('logs')">📋 Logs</button>
+    </div>
+
+    <!-- ==========================================
+         TOAST CONTAINER
+         ========================================== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ==========================================
+         MAIN CONTENT
+         ========================================== -->
+    <div class="main">
+
+        <!-- ====== TAB: OVERVIEW ====== -->
+        <div class="tab-content active" id="tab-overview">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">🖥️</div>
+                    <div class="stat-info">
+                        <h3 id="statDevices">0</h3>
+                        <p>Tổng Thiết Bị</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">💾</div>
+                    <div class="stat-info">
+                        <h3 id="statBackups">0</h3>
+                        <p>File Backup</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon yellow">⚡</div>
+                    <div class="stat-info">
+                        <h3 id="statTaskStatus">Idle</h3>
+                        <p>Trạng Thái Task</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">🕐</div>
+                    <div class="stat-info">
+                        <h3 id="statTime">--:--:--</h3>
+                        <p>Server Time</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-col">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>⚡ Quick Actions</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="triggerBackup()">💾 Backup All</button>
+                            <button class="btn btn-success" onclick="triggerDiscovery()">🔍 Discovery</button>
+                            <button class="btn btn-outline" onclick="switchTab('deploy')">🚀 Deploy Config</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📋 Recent Logs</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="log-viewer" id="overviewLogs" style="max-height:200px;">
+                            <div style="color:var(--text-muted);">Đang tải logs...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== TAB: DEVICES ====== -->
+        <div class="tab-content" id="tab-devices">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🖥️ Danh Sách Thiết Bị (Inventory)</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="showAddDeviceModal()">➕ Thêm Thiết Bị</button>
+                        <button class="btn btn-success" onclick="showScanModal()">🔍 Quét Mạng</button>
+                        <button class="btn btn-outline" onclick="loadDevices()">🔄 Reload</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tên</th>
+                                    <th>IP / Hostname</th>
+                                    <th>Platform</th>
+                                    <th>Site</th>
+                                    <th>Role</th>
+                                    <th>Type</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deviceTableBody">
+                                <tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== TAB: BACKUP ====== -->
+        <div class="tab-content" id="tab-backup">
+            <div class="card">
+                <div class="card-header">
+                    <h3>💾 Backup Configuration</h3>
+                    <button class="btn btn-primary" id="btnBackup" onclick="triggerBackup()">
+                        💾 Backup Toàn Hệ Thống
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p style="color:var(--text-secondary);margin-bottom:16px;">
+                        Nhấn nút để backup running-config của toàn bộ thiết bị trong inventory. 
+                        File sẽ được lưu vào thư mục <code style="background:var(--bg-primary);padding:2px 8px;border-radius:4px;">backups/</code>
+                    </p>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tên File</th>
+                                    <th>Kích Thước</th>
+                                    <th>Thời Gian</th>
+                                </tr>
+                            </thead>
+                            <tbody id="backupTableBody">
+                                <tr><td colspan="3" style="text-align:center;color:var(--text-muted);">Chưa có backup</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== TAB: DEPLOY ====== -->
+        <div class="tab-content" id="tab-deploy">
+            <div class="two-col">
+                <!-- OSPF -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🔵 Deploy OSPF</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Thiết Bị</label>
+                                <select id="ospf_device"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Process ID</label>
+                                <input type="number" id="ospf_pid" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Router ID</label>
+                                <input type="text" id="ospf_rid" value="1.1.1.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Network (JSON Array)</label>
+                                <textarea id="ospf_networks" rows="3" placeholder='[{"ip":"10.0.0.0","wildcard":"0.0.0.255","area":0}]'>[{"ip":"10.0.0.0","wildcard":"0.0.0.255","area":0}]</textarea>
+                            </div>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="ospf_dryrun" checked>
+                            <label for="ospf_dryrun">Dry-run (Chỉ hiển thị, không apply)</label>
+                        </div>
+                        <button class="btn btn-primary" onclick="deployOSPF()">🚀 Deploy OSPF</button>
+                        <div class="config-output" id="ospf_output" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <!-- STP -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🟢 Deploy STP</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Thiết Bị</label>
+                                <select id="stp_device"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>VLAN ID</label>
+                                <input type="text" id="stp_vlan" value="1-100">
+                            </div>
+                            <div class="form-group">
+                                <label>Priority</label>
+                                <input type="number" id="stp_priority" value="24576">
+                            </div>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="stp_dryrun" checked>
+                            <label for="stp_dryrun">Dry-run (Chỉ hiển thị, không apply)</label>
+                        </div>
+                        <button class="btn btn-success" onclick="deploySTP()">🚀 Deploy STP</button>
+                        <div class="config-output" id="stp_output" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EtherChannel -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>🟡 Deploy EtherChannel (LACP)</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Thiết Bị</label>
+                            <select id="ec_device"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Channel ID</label>
+                            <input type="number" id="ec_channel" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Member Ports</label>
+                            <input type="text" id="ec_ports" value="GigabitEthernet1/0/1 - 2">
+                        </div>
+                        <div class="form-group">
+                            <label>Allowed VLANs</label>
+                            <input type="text" id="ec_vlans" value="10,20,30">
+                        </div>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="ec_dryrun" checked>
+                        <label for="ec_dryrun">Dry-run (Chỉ hiển thị, không apply)</label>
+                    </div>
+                    <button class="btn btn-warning" onclick="deployEtherChannel()">🚀 Deploy EtherChannel</button>
+                    <div class="config-output" id="ec_output" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== TAB: DISCOVERY ====== -->
+        <div class="tab-content" id="tab-discovery">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🔍 Network Discovery</h3>
+                    <button class="btn btn-success" id="btnDiscovery" onclick="triggerDiscovery()">
+                        🔍 Quét Toàn Hệ Thống
+                    </button>
+                </div>
+                <div class="card-body">
+                    <p style="color:var(--text-secondary);margin-bottom:16px;">
+                        SSH vào từng thiết bị, chạy <code style="background:var(--bg-primary);padding:2px 8px;border-radius:4px;">show version</code> 
+                        để nhận diện Model, IOS Version và Uptime.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ====== TAB: LOGS ====== -->
+        <div class="tab-content" id="tab-logs">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📋 System Logs</h3>
+                    <div class="btn-group">
+                        <button class="btn btn-outline" onclick="loadLogs()">🔄 Reload</button>
+                        <button class="btn btn-outline" onclick="clearLogsDisplay()">🗑️ Clear View</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="log-viewer" id="fullLogViewer" style="max-height:600px;">
+                        <div style="color:var(--text-muted);">Đang tải logs...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ==========================================
+         MODALS
+         ========================================== -->
+    
+    <!-- Add Device Modal -->
+    <div class="modal-overlay" id="addDeviceModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>➕ Thêm Thiết Bị Mới</h3>
+                <button class="modal-close" onclick="hideAddDeviceModal()">&times;</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Tên Thiết Bị *</label>
+                    <input type="text" id="new_device_name" placeholder="Core_SW1">
+                </div>
+                <div class="form-group">
+                    <label>IP / Hostname *</label>
+                    <input type="text" id="new_device_ip" placeholder="10.0.0.2">
+                </div>
+                <div class="form-group">
+                    <label>Username *</label>
+                    <input type="text" id="new_device_user" value="admin">
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" id="new_device_pass">
+                </div>
+                <div class="form-group">
+                    <label>Platform</label>
+                    <select id="new_device_platform">
+                        <option value="cisco_ios">Cisco IOS</option>
+                        <option value="cisco_nxos">Cisco NX-OS</option>
+                        <option value="arista_eos">Arista EOS</option>
+                        <option value="juniper_junos">Juniper Junos</option>
+                        <option value="huawei_vrp">Huawei VRP</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Loại Thiết Bị</label>
+                    <select id="new_device_type">
+                        <option value="switch">Switch</option>
+                        <option value="router">Router</option>
+                        <option value="firewall">Firewall</option>
+                        <option value="wireless">Wireless</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Site</label>
+                    <input type="text" id="new_device_site" placeholder="DataCenter-HCM">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <input type="text" id="new_device_role" placeholder="core-switch">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="hideAddDeviceModal()">Hủy</button>
+                <button class="btn btn-primary" onclick="addDevice()">➕ Thêm Thiết Bị</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scan Network Modal -->
+    <div class="modal-overlay" id="scanModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>🔍 Quét Mạng Tự Động</h3>
+                <button class="modal-close" onclick="hideScanModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Dải Mạng (CIDR) *</label>
+                <input type="text" id="scan_subnet" placeholder="10.0.0.0/24" value="10.0.0.0/24">
+            </div>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="scan_user" value="admin">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="scan_pass">
+            </div>
+            <p style="color:var(--text-secondary);font-size:13px;margin-top:12px;">
+                ⚠️ Lưu ý: Quét mạng có thể mất vài phút tùy vào kích thước dải mạng.
+            </p>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="hideScanModal()">Hủy</button>
+                <button class="btn btn-success" onclick="scanNetwork()">🔍 Bắt Đầu Quét</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         JAVASCRIPT
+         ========================================== -->
+    <script>
+        const API = ''; // Same origin
+
+        // ==========================================
+        // UTILITY FUNCTIONS
+        // ==========================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'devices') loadDevices();
+            if (tabName === 'backup') loadBackups();
+            if (tabName === 'logs') loadLogs();
+        }
+
+        async function apiCall(method, endpoint, body = null) {
+            const options = {
+                method: method,
+                headers: { 'Content-Type': 'application/json' }
+            };
+            if (body) options.body = JSON.stringify(body);
+            
+            try {
+                const res = await fetch(`${API}${endpoint}`, options);
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'API Error');
+                return data;
+            } catch (err) {
+                showToast(`Lỗi: ${err.message}`, 'error');
+                throw err;
+            }
+        }
+
+        // ==========================================
+        // LOAD STATUS & OVERVIEW
+        // ==========================================
+        async function loadStatus() {
+            try {
+                const data = await apiCall('GET', '/api/status');
+                document.getElementById('statDevices').textContent = data.total_devices;
+                document.getElementById('statBackups').textContent = data.total_backups;
+                
+                const statuses = Object.values(data.task_status);
+                const running = statuses.filter(s => s === 'running').length;
+                document.getElementById('statTaskStatus').textContent = running > 0 ? `${running} Running` : 'Idle';
+                document.getElementById('statTaskStatus').style.color = running > 0 ? 'var(--accent-yellow)' : 'var(--accent-green)';
+                
+                const time = new Date(data.server_time);
+                document.getElementById('statTime').textContent = time.toLocaleTimeString();
+            } catch (e) {
+                console.error('Status load failed', e);
+            }
+        }
+
+        // ==========================================
+        // LOAD DEVICES
+        // ==========================================
+        async function loadDevices() {
+            try {
+                const data = await apiCall('GET', '/api/devices');
+                const tbody = document.getElementById('deviceTableBody');
+                
+                if (data.devices.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">Không có thiết bị</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.devices.map(d => `
+                    <tr>
+                        <td><strong>${d.name}</strong></td>
+                        <td><code>${d.hostname}</code></td>
+                        <td><span class="badge badge-blue">${d.platform}</span></td>
+                        <td>${d.site}</td>
+                        <td>${d.role}</td>
+                        <td><span class="badge badge-green">${d.type}</span></td>
+                        <td>
+                            <button class="btn btn-danger" onclick="deleteDevice('${d.name}')" style="padding:6px 12px;font-size:12px;">🗑️ Xóa</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                populateDeviceSelects(data.devices);
+            } catch (e) {}
+        }
+
+        function populateDeviceSelects(devices) {
+            const selects = ['ospf_device', 'stp_device', 'ec_device'];
+            selects.forEach(id => {
+                const sel = document.getElementById(id);
+                if (sel) {
+                    sel.innerHTML = devices.map(d => 
+                        `<option value="${d.name}">${d.name} (${d.hostname})</option>`
+                    ).join('');
+                }
+            });
+        }
+
+        // ==========================================
+        // ADD/DELETE DEVICE
+        // ==========================================
+        function showAddDeviceModal() {
+            document.getElementById('addDeviceModal').classList.add('active');
+        }
+
+        function hideAddDeviceModal() {
+            document.getElementById('addDeviceModal').classList.remove('active');
+            // Clear form
+            document.getElementById('new_device_name').value = '';
+            document.getElementById('new_device_ip').value = '';
+            document.getElementById('new_device_pass').value = '';
+        }
+
+        async function addDevice() {
+            try {
+                const payload = {
+                    name: document.getElementById('new_device_name').value,
+                    hostname: document.getElementById('new_device_ip').value,
+                    username: document.getElementById('new_device_user').value,
+                    password: document.getElementById('new_device_pass').value,
+                    platform: document.getElementById('new_device_platform').value,
+                    type: document.getElementById('new_device_type').value,
+                    site: document.getElementById('new_device_site').value || 'Default',
+                    role: document.getElementById('new_device_role').value || 'unknown'
+                };
+
+                if (!payload.name || !payload.hostname || !payload.password) {
+                    showToast('❌ Vui lòng điền đầy đủ thông tin bắt buộc!', 'error');
+                    return;
+                }
+
+                await apiCall('POST', '/api/inventory/add', payload);
+                showToast('✅ Đã thêm thiết bị thành công!', 'success');
+                hideAddDeviceModal();
+                loadDevices();
+                loadStatus();
+            } catch (e) {
+                showToast(`❌ Lỗi: ${e.message}`, 'error');
+            }
+        }
+
+        async function deleteDevice(deviceName) {
+            if (!confirm(`Bạn có chắc muốn xóa thiết bị '${deviceName}'?`)) return;
+            
+            try {
+                await apiCall('DELETE', `/api/inventory/${deviceName}`);
+                showToast(`✅ Đã xóa thiết bị ${deviceName}`, 'success');
+                loadDevices();
+                loadStatus();
+            } catch (e) {
+                showToast(`❌ Lỗi: ${e.message}`, 'error');
+            }
+        }
+
+        // ==========================================
+        // SCAN NETWORK
+        // ==========================================
+        function showScanModal() {
+            document.getElementById('scanModal').classList.add('active');
+        }
+
+        function hideScanModal() {
+            document.getElementById('scanModal').classList.remove('active');
+        }
+
+        async function scanNetwork() {
+            const subnet = document.getElementById('scan_subnet').value;
+            const username = document.getElementById('scan_user').value;
+            const password = document.getElementById('scan_pass').value;
+
+            if (!subnet) {
+                showToast('❌ Vui lòng nhập dải mạng!', 'error');
+                return;
+            }
+
+            showToast('🔍 Đang quét mạng... Quá trình này có thể mất vài phút.', 'info');
+            hideScanModal();
+
+            try {
+                const response = await fetch(`${API}/api/inventory/scan?subnet=${encodeURIComponent(subnet)}&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(`✅ ${data.message}`, 'success');
+                    loadDevices();
+                    loadStatus();
+                } else {
+                    showToast(`❌ ${data.detail}`, 'error');
+                }
+            } catch (e) {
+                showToast(`❌ Lỗi: ${e.message}`, 'error');
+            }
+        }
+
+        // ==========================================
+        // BACKUP
+        // ==========================================
+        async function triggerBackup() {
+            const btn = document.getElementById('btnBackup');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Đang backup...';
+            
+            try {
+                await apiCall('POST', '/api/backup');
+                showToast('✅ Đã kích hoạt backup!', 'success');
+                setTimeout(() => {
+                    loadBackups();
+                    loadStatus();
+                }, 5000);
+            } catch (e) {}
+            finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '💾 Backup Toàn Hệ Thống';
+                }, 10000);
+            }
+        }
+
+        async function loadBackups() {
+            try {
+                const data = await apiCall('GET', '/api/backups');
+                const tbody = document.getElementById('backupTableBody');
+                
+                if (data.backups.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">Chưa có backup</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = data.backups.map(b => `
+                    <tr>
+                        <td><code>${b.filename}</code></td>
+                        <td>${b.size_kb} KB</td>
+                        <td>${new Date(b.modified).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {}
+        }
+
+        // ==========================================
+        // DEPLOY
+        // ==========================================
+        async function deployOSPF() {
+            try {
+                const networks = JSON.parse(document.getElementById('ospf_networks').value);
+                const payload = {
+                    device_name: document.getElementById('ospf_device').value,
+                    process_id: parseInt(document.getElementById('ospf_pid').value),
+                    router_id: document.getElementById('ospf_rid').value,
+                    networks: networks,
+                    dry_run: document.getElementById('ospf_dryrun').checked
+                };
+                const data = await apiCall('POST', '/api/deploy/ospf', payload);
+                const output = document.getElementById('ospf_output');
+                output.style.display = 'block';
+                output.textContent = data.rendered_config || 'No output';
+                showToast(`✅ OSPF ${payload.dry_run ? 'Dry-run' : 'Deployed'} thành công!`, 'success');
+            } catch (e) {
+                showToast(`❌ Lỗi: ${e.message}`, 'error');
+            }
+        }
+
+        async function deploySTP() {
+            try {
+                const payload = {
+                    device_name: document.getElementById('stp_device').value,
+                    vlan_id: document.getElementById('stp_vlan').value,
+                    priority: parseInt(document.getElementById('stp_priority').value),
+                    dry_run: document.getElementById('stp_dryrun').checked
+                };
+                const data = await apiCall('POST', '/api/deploy/stp', payload);
+                const output = document.getElementById('stp_output');
+                output.style.display = 'block';
+                output.textContent = data.rendered_config || 'No output';
+                showToast(`✅ STP ${payload.dry_run ? 'Dry-run' : 'Deployed'} thành công!`, 'success');
+            } catch (e) {
+                showToast(`❌ Lỗi: ${e.message}`, 'error');
+            }
+        }
+
+        async function deployEtherChannel() {
+            try {
+                const payload = {
+                    device_name: document.getElementById('ec_device').value,
+                    channel_id: parseInt(document.getElementById('ec_channel').value),
+                    member_ports: document.getElementById('ec_ports').value,
+                    allowed_vlans: document.getElementById('ec_vlans').value,
+                    dry_run: document.getElementById('ec_dryrun').checked
+                };
+                const data = await apiCall('POST', '/api/deploy/etherchannel', payload);
+                const output = document.getElementById('ec_output');
+                output.style.display = 'block';
+                output.textContent = data.rendered_config || 'No output';
+                showToast(`✅ EtherChannel ${payload.dry_run ? 'Dry-run' : 'Deployed'} thành công!`, 'success');
+            } catch (e) {
+                showToast(`❌ Lỗi: ${e.message}`, 'error');
+            }
+        }
+
+        // ==========================================
+        // DISCOVERY
+        // ==========================================
+        async function triggerDiscovery() {
+            const btn = document.getElementById('btnDiscovery');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Đang quét...';
+            
+            try {
+                await apiCall('POST', '/api/discovery');
+                showToast('✅ Đã kích hoạt discovery!', 'success');
+            } catch (e) {}
+            finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '🔍 Quét Toàn Hệ Thống';
+                }, 10000);
+            }
+        }
+
+        // ==========================================
+        // LOGS
+        // ==========================================
+        async function loadLogs() {
+            try {
+                const data = await apiCall('GET', '/api/logs?limit=200');
+                renderLogs(data.logs, 'fullLogViewer');
+                renderLogs(data.logs.slice(-20), 'overviewLogs');
+            } catch (e) {}
+        }
+
+        function renderLogs(logs, containerId) {
+            const container = document.getElementById(containerId);
+            if (!logs || logs.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-muted);">Chưa có log nào</div>';
+                return;
+            }
+            
+            container.innerHTML = logs.map(l => `
+                <div class="log-entry">
+                    <span class="log-time">${l.timestamp.split(' ')[1] || l.timestamp}</span>
+                    <span class="log-level ${l.level}">[${l.level}]</span>
+                    <span class="log-module">${l.module}</span>
+                    <span class="log-msg">${l.message}</span>
+                </div>
+            `).join('');
+            
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearLogsDisplay() {
+            document.getElementById('fullLogViewer').innerHTML = '<div style="color:var(--text-muted);">Đã xóa hiển thị</div>';
+        }
+
+        // ==========================================
+        // AUTO REFRESH
+        // ==========================================
+        function refreshAll() {
+            loadStatus();
+            loadDevices();
+            loadLogs();
+        }
+
+        // Khởi tạo
+        refreshAll();
+        
+        // Auto refresh mỗi 10 giây
+        setInterval(() => {
+            loadStatus();
+            loadLogs();
+        }, 10000);
+    </script>
+</body>
+</html>
